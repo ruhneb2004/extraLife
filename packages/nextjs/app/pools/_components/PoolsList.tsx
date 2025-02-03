@@ -1,6 +1,54 @@
 "use client";
 
-import { ArrowUpRight } from "lucide-react";
+import { useState } from "react";
+import { ArrowUpRight, Search } from "lucide-react";
+
+// Search and Filter Component
+export const PoolsSearch = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  return (
+    <div>
+      {/* Search and Filters */}
+      <div className="flex flex-col md:flex-row gap-4 mb-8">
+        {/* Search Bar */}
+        <div className="flex-1 relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+          <input
+            type="text"
+            placeholder="Search pools..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="w-full h-14 pl-12 pr-4 bg-white rounded-2xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] border-none outline-none text-black placeholder-gray-400 focus:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transition-all"
+            style={{ fontFamily: "'Clash Display', sans-serif" }}
+          />
+        </div>
+
+        {/* Status Filter */}
+        <div className="flex gap-2">
+          {["all", "live", "closed"].map(status => (
+            <button
+              key={status}
+              onClick={() => setStatusFilter(status)}
+              className={`h-14 px-6 rounded-2xl font-medium capitalize transition-all ${
+                statusFilter === status
+                  ? "bg-[#a88ff0] text-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+                  : "bg-white text-gray-600 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+              }`}
+              style={{ fontFamily: "'Clash Display', sans-serif" }}
+            >
+              {status === "all" ? "All Pools" : status}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Pools Grid */}
+      <PoolsList searchQuery={searchQuery} statusFilter={statusFilter} />
+    </div>
+  );
+};
 
 type Pool = {
   id: number;
@@ -141,10 +189,30 @@ const PoolCard = ({ pool }: { pool: Pool }) => {
   );
 };
 
-export const PoolsList = () => {
+export const PoolsList = ({ searchQuery, statusFilter }: { searchQuery: string; statusFilter: string }) => {
+  const filteredPools = MOCK_POOLS.filter(pool => {
+    const matchesSearch =
+      pool.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      pool.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === "all" || pool.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  if (filteredPools.length === 0) {
+    return (
+      <div
+        className="bg-white rounded-[32px] p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] text-center"
+        style={{ fontFamily: "'Clash Display', sans-serif" }}
+      >
+        <p className="text-gray-400 text-xl">No pools found</p>
+        <p className="text-gray-500 text-sm mt-2">Try adjusting your search or filters</p>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {MOCK_POOLS.map(pool => (
+      {filteredPools.map(pool => (
         <PoolCard key={pool.id} pool={pool} />
       ))}
     </div>
